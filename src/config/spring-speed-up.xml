@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:repository="http://www.springframework.org/schema/data/repository"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+        http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<context:property-placeholder location="classpath:config/resources.properties" />
+
+	<!-- 启动时加 spring.profiles.active=development -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/es?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=utf-8" />
+		<property name="username" value="root" />
+		<property name="password" value="root" />
+	</bean>
+	<!-- 优化spring启动 通过移除bean定义 和 lazy init 实现 -->
+	<bean class="org.es.framework.common.spring.SpeedUpSpringProcessor">
+		<!-- 需要从bean定义中移除的bean的名字 -->
+		<property name="removedBeanNames">
+			<list>
+				<!-- <task:scheduled-tasks> 自动注册的 -->
+				<value>org.springframework.scheduling.config.ContextLifecycleScheduledTaskRegistrar
+				</value>
+
+				<!-- <task:annotation-driven/> 自动注册的 -->
+				<value>org.springframework.context.annotation.internalAsyncAnnotationProcessor
+				</value>
+				<value>org.springframework.context.annotation.internalScheduledAnnotationProcessor
+				</value>
+				<value>org.springframework.scheduling.config.internalAsyncExecutionAspect
+				</value>
+
+				<!-- <task:scheduled-tasks> 自动注册的 -->
+				<value>org.springframework.scheduling.config.ContextLifecycleScheduledTaskRegistrar
+				</value>
+
+				<!-- spring-config-shiro.xml -->
+				<value>rememberMeCookie</value>
+				<value>rememberMeManager</value>
+				<value>shiroCacheManager</value>
+				<value>sessionValidationScheduler</value>
+
+				<!-- spring-config-monitor.xml -->
+				<value>druidStatInterceptor</value>
+				<value>druidAdvisor</value>
+
+
+
+			</list>
+		</property>
+		<!-- 需要从bean定义中移除的bean的属性 -->
+		<!--替换掉的属性值 see removedBeanProperties 只支持简单属性 -->
+		<property name="removeOrReplaceBeanProperties">
+			<list>
+				<!-- spring-config-shiro.xml -->
+				<value>sessionManager@cacheManager</value>
+				<value>sessionManager@sessionValidationScheduler</value>
+				<value>securityManager@rememberMeManager</value>
+
+				<!-- spring-config.xml -->
+				<value>entityManagerFactory@jpaPropertyMap@hibernate.cache.use_second_level_cache=false
+				</value>
+				<value>entityManagerFactory@jpaPropertyMap@hibernate.cache.use_query_cache
+				</value>
+				<value>entityManagerFactory@jpaPropertyMap@hibernate.cache.region.factory_class
+				</value>
+				<value>entityManagerFactory@jpaPropertyMap@hibernate.cache.use_structured_entries
+				</value>
+				<value>entityManagerFactory@jpaPropertyMap@net.sf.ehcache.configurationResourceName
+				</value>
+
+				<!-- spring-mvc.xml(<mvc:async-support default-timeout="30000" task-executor="executor"/>) -->
+				<value>org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#0@asyncRequestTimeout
+				</value>
+				<value>org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#0@taskExecutor
+				</value>
+				<value>org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#0@executor
+				</value>
+				<value>org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#0@callableInterceptors
+				</value>
+				<value>org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#0@deferredResultInterceptors
+				</value>
+			</list>
+		</property>
+
+		<!-- 需要从bean定义中移除指定的类类型 正则表达式 -->
+		<property name="removedClassPatterns">
+			<list>
+				<!--<value>com\.sishuok\.es\.showcase.*</value> -->
+				<!--<value>com\.sishuok\.es\.monitor.*</value> -->
+				<!--<value>com\.sishuok\.es\.extra\.aop.*</value> -->
+				<!--<value>com\.sishuok\.es\.extra\.quartz.*</value> -->
+				<!--<value>com\.sishuok\.es\.maintain.*</value> -->
+				<!--<value>com\.sishuok\.es\.personal.*\.web\.controller.*</value> -->
+				<!--<value>com\.sishuok\.es\.sys.*\.web\.controller.*</value> -->
+			</list>
+		</property>
+
+		<!-- 指定非延迟加载的bean -->
+		<property name="noneLazyBeanNames">
+			<list>
+				<value>domainClassConverter</value>
+			</list>
+		</property>
+	</bean>
+<!-- com.sishuok.es.**.web.controller,com.sishuok.es.**.service,com.sishuok.es.**.entity -->
+	<context:component-scan
+		base-package="com"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
+			<context:include-filter type="annotation"
+            expression="javax.persistence.Entity" />
+			
+	</context:component-scan>
+
+	<bean id="dataSourceProxy"
+		class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy">
+		<property name="targetDataSource" ref="dataSource" />
+	</bean>
+
+	<!-- jpa Entity Factory 配置 -->
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="dataSourceProxy" />
+		<property name="packagesToScan" value="com.sishuok.es.**.entity" />
+		<property name="persistenceUnitName" value="${jpa.persistenceUnitName}" />
+		<property name="persistenceProvider">
+			<bean class="org.hibernate.ejb.HibernatePersistence" />
+		</property>
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+				<property name="generateDdl" value="false" />
+				<property name="database" value="MYSQL" />
+				<property name="databasePlatform" value="org.hibernate.dialect.MySQL5InnoDBDialect" />
+				<property name="showSql" value="true" />
+			</bean>
+		</property>
+		<property name="jpaDialect">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect" />
+		</property>
+		<property name="jpaPropertyMap">
+			<map>
+				<!-- 使用自定义的validator进行jsr303验证 -->
+				<entry key="javax.persistence.validation.factory" value-ref="validator" />
+				<!-- jsr303验证模式 因为其要么验证 要么不验证 不能按照规则走 所以此处禁用 -->
+				<entry key="javax.persistence.validation.mode" value="NONE" />
+
+				<!-- 只扫描class文件，不扫描hbm，默认两个都搜索 -->
+				<entry key="hibernate.archive.autodetection" value="class" />
+				<!-- 不检查@NamedQuery -->
+				<entry key="hibernate.query.startup_check" value="false" />
+
+				<entry key="hibernate.query.substitutions" value="${hibernate.query.substitutions}" />
+				<entry key="hibernate.default_batch_fetch_size" value="${hibernate.default_batch_fetch_size}" />
+				<entry key="hibernate.max_fetch_depth" value="${hibernate.max_fetch_depth}" />
+				<entry key="hibernate.generate_statistics" value="${hibernate.generate_statistics}" />
+				<entry key="hibernate.bytecode.use_reflection_optimizer"
+					value="${hibernate.bytecode.use_reflection_optimizer}" />
+				<entry key="hibernate.cache.use_second_level_cache" value="${hibernate.cache.use_second_level_cache}" />
+				<entry key="hibernate.cache.use_query_cache" value="${hibernate.cache.use_query_cache}" />
+				<entry key="hibernate.cache.region.factory_class" value="${hibernate.cache.region.factory_class}" />
+				<entry key="net.sf.ehcache.configurationResourceName" value="${net.sf.ehcache.configurationResourceName}" />
+				<entry key="hibernate.cache.use_structured_entries" value="${hibernate.cache.use_structured_entries}" />
+			</map>
+		</property>
+	</bean>
+
+	<!-- spring data jpa repository base-package:扫描的包 repository-impl-postfix:仓库自定义实现类型的后缀 
+		自动扫描并添加到接口的实现 factory-class 仓库接口的实现工厂 -->
+	<jpa:repositories base-package="com.sishuok.es.**.repository"
+		repository-impl-postfix="Impl"
+		factory-class="org.es.framework.common.repository.support.SimpleBaseRepositoryFactoryBean"
+		entity-manager-factory-ref="entityManagerFactory"
+		transaction-manager-ref="transactionManager">
+	</jpa:repositories>
+
+
+	<!--事务管理器配置 -->
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean>
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<!-- 在web环境中一定要定位到classpath 否则默认到当前web应用下找 -->
+				<value>classpath:config/messages</value>
+				<value>classpath:config/ValidationMessages</value>
+			</list>
+		</property>
+		<property name="useCodeAsDefaultMessage" value="false" />
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="cacheSeconds" value="60" />
+	</bean>
+
+	<!-- 以下 validator ConversionService 在使用 mvc:annotation-driven 会 自动注册 -->
+	<bean id="validator"
+		class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+		<property name="providerClass" value="org.hibernate.validator.HibernateValidator" />
+		<!-- 如果不加默认到 使用classpath下的 ValidationMessages.properties -->
+		<property name="validationMessageSource" ref="messageSource" />
+	</bean>
+
+	<import resource="spring-config-cache.xml" />
+	<import resource="spring-config-task.xml" />
+	<import resource="spring-config-shiro.xml" />
+	<import resource="spring-config-monitor.xml" />
+</beans>
